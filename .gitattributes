@@ -1,6 +1,6 @@
 libraries* linguist-vendored
 *.html linguist-detectable=false
-*.bat linguist-generated=false
+*.bat linguist-generated=true
 *.xml linguist-generated=false
 *.css linguist-generated=false
 *.json linguist-generated=false
