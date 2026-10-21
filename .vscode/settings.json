@@ -1,0 +1,7 @@
+{
+    "java.project.referencedLibraries": [
+        "lib/**/*.jar",
+        "libraries/jc304_kit/lib/api_classic.jar",
+        "libraries/ts_102241_09/uicc-api-for-java-card-REL-920.jar"
+    ]
+}
