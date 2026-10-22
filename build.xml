@@ -11,7 +11,7 @@
         <tstamp/>
         <javacard jckit="./libraries/jc304_kit">
             <cap aid="A0:00:00:00:87" output="out/UICC_HOTP.cap" sources="src" version="1.0" ints="true">
-                <applet class="fun.hotp.UICC_HOTP" aid="A0:00:00:00:87:53:49:4D:20:48:4F:54:50"/>
+                <applet class="fun.hotp.UICC_HOTP" aid="A0:00:00:00:87:55:49:43:43:20:48:4F:54:50"/>
                 
                 <import jar="libraries/ts_102241_09/uicc-api-for-java-card-REL-920.jar"/>
             </cap>
