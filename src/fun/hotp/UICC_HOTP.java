@@ -78,6 +78,9 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
     private static final byte QLFR_DATE_TIME_INFO = 0x03;
     private static final short HMAC_KEY_LENGTH_512_BITS = _64;
 
+    // private boolean crypto_initialized = false;
+    private byte[] secret_key;
+
     private ToolkitRegistry reg;
     private byte iid_sim_hotp;
 
@@ -92,11 +95,11 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
 		offset += length;
 		length = install_params[offset++]; // Grab the length of HMAC key
         
-        try {
-            hmac_key = (HMACKey)KeyBuilder.buildKey(KeyBuilder.ALG_TYPE_HMAC, JCSystem.MEMORY_TYPE_PERSISTENT, (short)(length * 8), false);
+        secret_key = new byte[length];
+        Util.arrayCopyNonAtomic(install_params, offset, secret_key, _00, length);
 
-            // Initialize the HMAC key with the given bytes
-            hmac_key.setKey(install_params, offset, length);
+        try {
+            hmac_key = (HMACKey)KeyBuilder.buildKey(KeyBuilder.ALG_TYPE_HMAC, JCSystem.MEMORY_TYPE_TRANSIENT_RESET, (short)(length * 8), false);
             hmac_sign = Signature.getInstance(MessageDigest.ALG_SHA_256, Signature.SIG_CIPHER_HMAC, Cipher.PAD_NULL, true);
         } catch (CryptoException e) {
             ISOException.throwIt((short)(SW_CRYPTO_EXCEPTION + 1));
@@ -190,8 +193,10 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         len         = pro_resp_hdlr.getValueLength();
         pro_resp_hdlr.copyValue(_00, global_buff, _00, len);
 
+        hmac_key.setKey(secret_key, _00, (short)secret_key.length);
+
         hmac_sign.init(hmac_key, Signature.MODE_SIGN);
-        // hmac_sign.sign(global_buff, _00, _08, global_buff, _00);
+        hmac_sign.sign(global_buff, _00, _08, global_buff, _00);
         pro_hdlr.initDisplayText((byte)0x81, (byte)_08, strings, STR_ALL_RIGHT_OFF, STR_ALL_RIGHT_LEN);
         pro_hdlr.send();
     }
