@@ -47,8 +47,8 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
     private static final short STR_MENU_2_LEN = 15;
     private static final short STR_MENU_2_OFF = (short)(STR_MENU_1_OFF + STR_MENU_1_LEN);
 
-    private static final short STR_ALL_RIGHT_LEN = 14;
-    private static final short STR_ALL_RIGHT_OFF = (short)(STR_MENU_2_OFF + STR_MENU_2_LEN);
+    private static final short STR_HELP_MESSAGE_LEN = 62;
+    private static final short STR_HELP_MESSAGE_OFF = (short)(STR_MENU_2_OFF + STR_MENU_2_LEN);
 
 
     private static final byte[] strings = {
@@ -62,9 +62,15 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         // Menu 2: Нужна помощь
         (byte)0x81,(byte)0x0C,(byte)0x08,(byte)0x9D,(byte)0xC3,(byte)0xB6,(byte)0xBD,(byte)0xB0,
         (byte)0x20,(byte)0xBF,(byte)0xBE,(byte)0xBC,(byte)0xBE,(byte)0xC9,(byte)0xCC,
-        // For testing purposes: 'Все Ок!'
-        (byte)0x04,(byte)0x12,(byte)0x04,(byte)0x41,(byte)0x04,(byte)0x35,(byte)0x00,(byte)0x20,
-        (byte)0x04,(byte)0x1E,(byte)0x04,(byte)0x3A,(byte)0x00,(byte)0x21,
+        // Help option stub: 'Санитары уже выехали. Ожидайте.'
+        (byte)0x04,(byte)0x21,(byte)0x04,(byte)0x30,(byte)0x04,(byte)0x3D,(byte)0x04,(byte)0x38,
+        (byte)0x04,(byte)0x42,(byte)0x04,(byte)0x30,(byte)0x04,(byte)0x40,(byte)0x04,(byte)0x4B,
+        (byte)0x00,(byte)0x20,(byte)0x04,(byte)0x43,(byte)0x04,(byte)0x36,(byte)0x04,(byte)0x35,
+        (byte)0x00,(byte)0x20,(byte)0x04,(byte)0x32,(byte)0x04,(byte)0x4B,(byte)0x04,(byte)0x35,
+        (byte)0x04,(byte)0x45,(byte)0x04,(byte)0x30,(byte)0x04,(byte)0x3B,(byte)0x04,(byte)0x38,
+        (byte)0x00,(byte)0x2E,(byte)0x00,(byte)0x20,(byte)0x04,(byte)0x1E,(byte)0x04,(byte)0x36,
+        (byte)0x04,(byte)0x38,(byte)0x04,(byte)0x34,(byte)0x04,(byte)0x30,(byte)0x04,(byte)0x39,
+        (byte)0x04,(byte)0x42,(byte)0x04,(byte)0x35,(byte)0x00,(byte)0x2E,
     };
 
     private static final short _00 = 0x00;
@@ -222,7 +228,7 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
     private void
     option_help(ProactiveHandler pro_hdlr, ProactiveResponseHandler pro_resp_hdlr)
     {
-        pro_hdlr.initDisplayText((byte)0x81, (byte)_08, strings, STR_ALL_RIGHT_OFF, STR_ALL_RIGHT_LEN);
+        pro_hdlr.initDisplayText((byte)0x81, (byte)_08, strings, STR_HELP_MESSAGE_OFF, STR_HELP_MESSAGE_LEN);
         pro_hdlr.send();
     }
 
