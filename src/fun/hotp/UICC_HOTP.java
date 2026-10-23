@@ -76,6 +76,7 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
     private static final short _64 = 0x40;
     
     private static final byte QLFR_DATE_TIME_INFO = 0x03;
+    private static final short HMAC_KEY_LENGTH_512_BITS = _64;
 
     private ToolkitRegistry reg;
     private byte iid_sim_hotp;
@@ -89,14 +90,13 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
 		offset += length;
 		length = install_params[offset++]; // Control info length
 		offset += length;
-		length = install_params[offset++]; // Applet-specific data length (i.e. C9xx)
-        if (length != _08) {
-            ISOException.throwIt((short)(ISO7816.SW_WRONG_LENGTH + 1));
-        }
+		length = install_params[offset++]; // Grab the length of HMAC key
         
         try {
-            hmac_key = (HMACKey)KeyBuilder.buildKey(KeyBuilder.ALG_TYPE_HMAC, JCSystem.MEMORY_TYPE_PERSISTENT, KeyBuilder.LENGTH_HMAC_SHA_256_BLOCK_64, false);
-            hmac_key.setKey(install_params, _00, length);
+            hmac_key = (HMACKey)KeyBuilder.buildKey(KeyBuilder.ALG_TYPE_HMAC, JCSystem.MEMORY_TYPE_PERSISTENT, (short)(length * 8), false);
+
+            // Initialize the HMAC key with the given bytes
+            hmac_key.setKey(install_params, offset, length);
             hmac_sign = Signature.getInstance(MessageDigest.ALG_SHA_256, Signature.SIG_CIPHER_HMAC, Cipher.PAD_NULL, true);
         } catch (CryptoException e) {
             ISOException.throwIt((short)(SW_CRYPTO_EXCEPTION + 1));
@@ -119,9 +119,6 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         EnvelopeHandler env_hdlr;
         byte item_id;
 
-        error_logger(hmac_key.getSize());
-
-        
         try {
             // hmac_key.setKey(secret_key, _00, _08);
             switch (event) {
@@ -190,10 +187,11 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         }
 
         global_buff = UICCPlatform.getTheVolatileByteArray();
-        len = pro_resp_hdlr.getValueLength();
+        len         = pro_resp_hdlr.getValueLength();
         pro_resp_hdlr.copyValue(_00, global_buff, _00, len);
 
-        // hmac_sign.init(hmac_key, Signature.MODE_SIGN);
+        hmac_sign.init(hmac_key, Signature.MODE_SIGN);
+        // hmac_sign.sign(global_buff, _00, _08, global_buff, _00);
         pro_hdlr.initDisplayText((byte)0x81, (byte)_08, strings, STR_ALL_RIGHT_OFF, STR_ALL_RIGHT_LEN);
         pro_hdlr.send();
     }
