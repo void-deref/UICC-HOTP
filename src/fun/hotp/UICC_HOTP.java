@@ -80,14 +80,10 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
     private static final short _04 = 0x04;
     private static final short _06 = 0x06;
     private static final short _08 = 0x08;
-    private static final short _20 = 0x14;
     private static final short _32 = 0x20;
-    private static final short _64 = 0x40;
     
     private static final byte QLFR_DATE_TIME_INFO = 0x03;
-    private static final short HMAC_KEY_LENGTH_512_BITS = _64;
 
-    // private boolean crypto_initialized = false;
     private byte[] secret_key;
 
     private ToolkitRegistry reg;
@@ -108,7 +104,7 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         Util.arrayCopyNonAtomic(install_params, offset, secret_key, _00, length);
 
         try {
-            hmac_key = (HMACKey)KeyBuilder.buildKey(KeyBuilder.ALG_TYPE_HMAC, JCSystem.MEMORY_TYPE_TRANSIENT_RESET, (short)(length * 8), false);
+            hmac_key  = (HMACKey)KeyBuilder.buildKey(KeyBuilder.ALG_TYPE_HMAC, JCSystem.MEMORY_TYPE_TRANSIENT_RESET, (short)(length * 8), false);
             hmac_sign = Signature.getInstance(MessageDigest.ALG_SHA_256, Signature.SIG_CIPHER_HMAC, Cipher.PAD_NULL, true);
         } catch (CryptoException e) {
             ISOException.throwIt((short)(SW_CRYPTO_EXCEPTION + 1));
@@ -132,7 +128,6 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         byte item_id;
 
         try {
-            // hmac_key.setKey(secret_key, _00, _08);
             switch (event) {
                 case EVENT_MENU_SELECTION: {
                     env_hdlr = EnvelopeHandlerSystem.getTheHandler();
@@ -152,7 +147,6 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         catch (CryptoException exc)      {error_logger((short)(SW_CRYPTO_EXCEPTION  | exc.getReason()));}
         catch (SystemException exc)      {error_logger((short)(SW_SYSTEM_EXCEPTION  | exc.getReason()));}
         catch (Exception exc)            {error_logger(SW_UNKNOWN_EXCEPTION);}
-        
     }
 
     protected void
@@ -219,7 +213,7 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
 
         // 4. Generate DBC (Dynamic Binary Code)
         dbc %= divisor;
-        int_to_ascii(dbc, global_buff, _00, _06);
+        int_to_dec_str(dbc, global_buff, _00, _06);
 
         pro_hdlr.initDisplayText((byte)0x81, (byte)_04, global_buff, _00, _06);
         pro_hdlr.send();
@@ -238,32 +232,26 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         ProactiveHandler pro_hdlr = ProactiveHandlerSystem.getTheHandler();
         byte[] global_buff = UICCPlatform.getTheVolatileByteArray();
 
-        to_ascii(global_buff, sw);
-        
-        pro_hdlr.initDisplayText((byte)0x81, (byte)_04, global_buff, _00, _08);
-        pro_hdlr.send();
-    }
-
-    private void
-    to_ascii(byte[] global_buff, short sw)
-    {
         short offset = 0;
 
-        // SW:
+        // "SW: "
         global_buff[offset++] = (byte)0x53;
         global_buff[offset++] = (byte)0x57;
         global_buff[offset++] = (byte)0x3A;
         global_buff[offset++] = (byte)0x20;
 
         // four bytes for status word
-        global_buff[offset++] = hex_nibble((byte)((sw & (short)0xF000) >> 12));
-        global_buff[offset++] = hex_nibble((byte)((sw & 0x0F00) >> 8));
-        global_buff[offset++] = hex_nibble((byte)((sw & 0x00F0) >> 4));
-        global_buff[offset++] = hex_nibble((byte)((sw & 0x000F) >> 0));
+        global_buff[offset++] = int_to_hex_str((byte)((sw & (short)0xF000) >> 12));
+        global_buff[offset++] = int_to_hex_str((byte)((sw & 0x0F00) >> 8));
+        global_buff[offset++] = int_to_hex_str((byte)((sw & 0x00F0) >> 4));
+        global_buff[offset++] = int_to_hex_str((byte)((sw & 0x000F) >> 0));
+        
+        pro_hdlr.initDisplayText((byte)0x81, (byte)_04, global_buff, _00, _08);
+        pro_hdlr.send();
     }
 
     private byte
-    hex_nibble(byte nibble)
+    int_to_hex_str(byte nibble)
     {
         byte res = 0x30;
         if (nibble <= 9) {
@@ -276,18 +264,8 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
         return res;
     }
 
-    private int
-    get_int(byte[] in_buff, short off)
-    {
-        int res = (in_buff[(short)(off + _00)] & 0x7f) << 24
-                | (in_buff[(short)(off + _01)] & 0xff) << 16
-                | (in_buff[(short)(off + _02)] & 0xff) << 8
-                | (in_buff[(short)(off + _03)] & 0xff) << 0;
-        return res;
-    }
-
     private short
-    int_to_ascii(int value, byte[] out_buff, short off, short digits)
+    int_to_dec_str(int value, byte[] out_buff, short off, short digits)
     {
         short bound = off;
         off += (digits - _01);
@@ -297,6 +275,16 @@ UICC_HOTP extends Applet implements ToolkitInterface, ToolkitConstants
             value /= 10;
         }
         return _00;
+    }
+
+    private int
+    get_int(byte[] in_buff, short off)
+    {
+        int res = (in_buff[(short)(off + _00)] & 0x7f) << 24
+                | (in_buff[(short)(off + _01)] & 0xff) << 16
+                | (in_buff[(short)(off + _02)] & 0xff) << 8
+                | (in_buff[(short)(off + _03)] & 0xff) << 0;
+        return res;
     }
 
     public void
